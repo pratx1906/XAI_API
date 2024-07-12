@@ -1,22 +1,82 @@
-import openai
+import random
+import markovify
+import numpy as np
 
-# Initialize the OpenAI API with your API key
-openai.api_key = 'your-openai-api-key'
+# Sample text to train the Markov model (expanded sample sentences)
+sample_text = """
+To change the prediction, feature1 was modified from {original1} to {modified1}, 
+feature2 from {original2} to {modified2}, feature3 from {original3} to {modified3}, 
+and feature4 from {original4} to {modified4}.
+Feature1 was increased from {original1} to {modified1}, and feature2 was decreased from {original2} to {modified2}.
+The original value of feature3 was {original3}, which was changed to {modified3}.
+Similarly, feature4's value was altered from {original4} to {modified4}.
+"""
+
+# Build the Markov model
+text_model = markovify.Text(sample_text)
 
 
 def generate_counterfactuals(model, input_data):
+    """
+    Generates counterfactual data and explanation for the given input data using the provided model.
+
+    Args:
+        model: The trained model for generating counterfactuals.
+        input_data (list or numpy array): The input data for which counterfactuals need to be generated.
+
+    Returns:
+        dict: A dictionary containing the counterfactual data and the generated explanation.
+
+    Raises:
+        ValueError: If input_data is not in the expected format.
+        Exception: For any other errors encountered during counterfactual generation.
+    """
+    if not isinstance(input_data, (list, np.ndarray)) or len(input_data) != 4:
+        raise ValueError("Input data must be a list or numpy array of length 4.")
+
     # Generate the counterfactual data based on the model and input
-    counterfactual_data = {'feature1': input_data[0] + 1, 'feature2': input_data[1] - 1}
+    try:
+        # Predict the current output
+        original_prediction = model.predict([input_data])[0]
 
-    # Generate the counterfactual explanation using GPT-3
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=f"Generate a counterfactual explanation for a model prediction. The original input features are {input_data}. The counterfactual features are {counterfactual_data}.",
-        max_tokens=150
+        counterfactual_data = {
+            'feature1': input_data[0] + random.choice([-1, 1]),
+            'feature2': input_data[1] + random.choice([-1, 1]),
+            'feature3': input_data[2] + random.choice([-1, 1]),
+            'feature4': input_data[3] + random.choice([-1, 1])
+        }
+
+        # Ensure the counterfactual changes the prediction
+        while model.predict([list(counterfactual_data.values())])[0] == original_prediction:
+            counterfactual_data = {
+                'feature1': input_data[0] + random.choice([-1, 1]),
+                'feature2': input_data[1] + random.choice([-1, 1]),
+                'feature3': input_data[2] + random.choice([-1, 1]),
+                'feature4': input_data[3] + random.choice([-1, 1])
+            }
+    except Exception as e:
+        raise Exception(f"Error generating counterfactual data: {e}")
+
+    try:
+        # Generate the counterfactual explanation using Markov model
+        explanation_template = text_model.make_sentence()
+    except Exception as e:
+        explanation_template = None
+
+    # If the Markov model fails to generate a sentence, use a default template
+    if explanation_template is None:
+        explanation_template = (
+            "To change the prediction, feature1 was modified from {original1} to {modified1}, "
+            "feature2 from {original2} to {modified2}, feature3 from {original3} to {modified3}, "
+            "and feature4 from {original4} to {modified4}."
+        )
+
+    counterfactual_explanation = explanation_template.format(
+        original1=input_data[0], modified1=counterfactual_data['feature1'],
+        original2=input_data[1], modified2=counterfactual_data['feature2'],
+        original3=input_data[2], modified3=counterfactual_data['feature3'],
+        original4=input_data[3], modified4=counterfactual_data['feature4']
     )
-
-    # Extract the generated explanation
-    counterfactual_explanation = response.choices[0].text.strip()
 
     return {
         'counterfactual_data': counterfactual_data,
