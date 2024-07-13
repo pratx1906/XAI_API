@@ -1,7 +1,7 @@
 # XAI_API
 This API provides various explainable AI (XAI) functionalities, including prediction, SHAP explanations, LIME explanations, feature importance, and counterfactual explanations.
 
-https://github.com/pratx1906/XAI_API/blob/main/Designer%20(2).png
+![Explainable API for Machine Learning](https://github.com/pratx1906/XAI_API/blob/main/Designer%20(2).png)
 
 
 # Next Update 
