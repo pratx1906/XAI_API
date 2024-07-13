@@ -1,6 +1,13 @@
 # XAI_API
 This API provides various explainable AI (XAI) functionalities, including prediction, SHAP explanations, LIME explanations, feature importance, and counterfactual explanations.
 
+# Next Update 
+Performance Optimization
+Backend Database Optimization 
+Integrated Gradients
+DeepLIFT
+Cache Layering
+
 Endpoints
 Predict Endpoint
 URL: /predict
