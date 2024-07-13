@@ -15,30 +15,20 @@ Similarly, feature4's value was altered from {original4} to {modified4}.
 # Build the Markov model
 text_model = markovify.Text(sample_text)
 
-
 def generate_counterfactuals(model, input_data):
-    """
-    Generates counterfactual data and explanation for the given input data using the provided model.
-
-    Args:
-        model: The trained model for generating counterfactuals.
-        input_data (list or numpy array): The input data for which counterfactuals need to be generated.
-
-    Returns:
-        dict: A dictionary containing the counterfactual data and the generated explanation.
-
-    Raises:
-        ValueError: If input_data is not in the expected format.
-        Exception: For any other errors encountered during counterfactual generation.
-    """
     if not isinstance(input_data, (list, np.ndarray)) or len(input_data) != 4:
         raise ValueError("Input data must be a list or numpy array of length 4.")
 
-    # Generate the counterfactual data based on the model and input
-    try:
-        # Predict the current output
-        original_prediction = model.predict([input_data])[0]
+    original_prediction = model.predict([input_data])[0]
 
+    counterfactual_data = {
+        'feature1': input_data[0] + random.choice([-1, 1]),
+        'feature2': input_data[1] + random.choice([-1, 1]),
+        'feature3': input_data[2] + random.choice([-1, 1]),
+        'feature4': input_data[3] + random.choice([-1, 1])
+    }
+
+    while model.predict([list(counterfactual_data.values())])[0] == original_prediction:
         counterfactual_data = {
             'feature1': input_data[0] + random.choice([-1, 1]),
             'feature2': input_data[1] + random.choice([-1, 1]),
@@ -46,24 +36,7 @@ def generate_counterfactuals(model, input_data):
             'feature4': input_data[3] + random.choice([-1, 1])
         }
 
-        # Ensure the counterfactual changes the prediction
-        while model.predict([list(counterfactual_data.values())])[0] == original_prediction:
-            counterfactual_data = {
-                'feature1': input_data[0] + random.choice([-1, 1]),
-                'feature2': input_data[1] + random.choice([-1, 1]),
-                'feature3': input_data[2] + random.choice([-1, 1]),
-                'feature4': input_data[3] + random.choice([-1, 1])
-            }
-    except Exception as e:
-        raise Exception(f"Error generating counterfactual data: {e}")
-
-    try:
-        # Generate the counterfactual explanation using Markov model
-        explanation_template = text_model.make_sentence()
-    except Exception as e:
-        explanation_template = None
-
-    # If the Markov model fails to generate a sentence, use a default template
+    explanation_template = text_model.make_sentence()
     if explanation_template is None:
         explanation_template = (
             "To change the prediction, feature1 was modified from {original1} to {modified1}, "

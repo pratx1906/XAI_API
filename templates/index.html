@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>XAI API Dashboard</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <h1>XAI API Dashboard</h1>
+
+    <h2>Upload Model</h2>
+    <form id="upload-form">
+        <input type="file" id="file-input" name="file">
+        <button type="submit">Upload</button>
+    </form>
+    <p id="upload-result"></p>
+
+    <h2>API Endpoints</h2>
+    <button onclick="getPrediction()">Get Prediction</button>
+    <button onclick="getShapExplanation()">Get SHAP Explanation</button>
+    <button onclick="getLimeExplanation()">Get LIME Explanation</button>
+    <button onclick="getFeatureImportance()">Get Feature Importance</button>
+    <button onclick="getCounterfactualExplanation()">Get Counterfactual Explanation</button>
+
+    <h3>Prediction</h3>
+    <pre id="prediction-result"></pre>
+
+    <h3>SHAP Explanation</h3>
+    <pre id="shap-result"></pre>
+
+    <h3>LIME Explanation</h3>
+    <pre id="lime-result"></pre>
+
+    <h3>Feature Importance</h3>
+    <pre id="importance-result"></pre>
+
+    <h3>Counterfactual Explanation</h3>
+    <pre id="counterfactual-result"></pre>
+
+    <script>
+        document.getElementById('upload-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const formData = new FormData();
+            formData.append('file', document.getElementById('file-input').files[0]);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                document.getElementById('upload-result').innerText = result.message || result.error;
+            } catch (error) {
+                console.error('Error uploading model:', error);
+                document.getElementById('upload-result').innerText = 'Error uploading model';
+            }
+        });
+
+        async function getPrediction() {
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ input: [0.5, 1.2, -0.3, 2.1] })
+                });
+                const result = await response.json();
+                console.log('Prediction result:', result);
+                document.getElementById('prediction-result').innerText = JSON.stringify(result, null, 2);
+            } catch (error) {
+                console.error('Error fetching prediction:', error);
+            }
+        }
+
+        async function getShapExplanation() {
+            try {
+                const response = await fetch('/explain/shap', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ input: [0.5, 1.2, -0.3, 2.1] })
+                });
+                const result = await response.json();
+                console.log('SHAP Explanation result:', result);
+                document.getElementById('shap-result').innerText = JSON.stringify(result, null, 2);
+            } catch (error) {
+                console.error('Error fetching SHAP explanation:', error);
+            }
+        }
+
+        async function getLimeExplanation() {
+            try {
+                const response = await fetch('/explain/lime', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        input: [0.5, 1.2, -0.3, 2.1],
+                        feature_names: ['feature1', 'feature2', 'feature3', 'feature4'],
+                        class_names: ['class1', 'class2'],
+                        training_data: [
+                            [0.5, 1.2, -0.3, 2.1],
+                            [0.4, 1.3, -0.2, 2.0],
+                            [0.6, 1.1, -0.4, 2.2]
+                        ]
+                    })
+                });
+                const result = await response.json();
+                console.log('LIME Explanation result:', result);
+                document.getElementById('lime-result').innerText = JSON.stringify(result, null, 2);
+            } catch (error) {
+                console.error('Error fetching LIME explanation:', error);
+            }
+        }
+
+        async function getFeatureImportance() {
+            try {
+                const response = await fetch('/explain/feature_importance', {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                console.log('Feature Importance result:', result);
+                document.getElementById('importance-result').innerText = JSON.stringify(result, null, 2);
+            } catch (error) {
+                console.error('Error fetching feature importance:', error);
+            }
+        }
+
+        async function getCounterfactualExplanation() {
+            console.log("Fetching counterfactual explanation...");
+            try {
+                const response = await fetch('/explain/counterfactual', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ input: [0.5, 1.2, -0.3, 2.1] })
+                });
+                const result = await response.json();
+                console.log('Counterfactual Explanation result:', result);
+                document.getElementById('counterfactual-result').innerText = JSON.stringify(result, null, 2);
+            } catch (error) {
+                console.error('Error fetching counterfactual explanation:', error);
+            }
+        }
+    </script>
+</body>
+</html>
